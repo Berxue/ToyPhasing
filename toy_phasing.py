@@ -1,6 +1,7 @@
 import os
 import time
 from os import path as op
+from pathlib import Path
 import numpy as np
 from opencv_plugin import CV_Plugin,get_phase_and_intensity
 
@@ -193,31 +194,32 @@ def assemble_phasing(initial_mask,intensity,hio_parameter,sw_threshold,sw_sigma,
     return phasing_loop
 
 
-def define_file_paths(input_path_image,mask_path):
-    name = op.basename(input_path_image)
+def define_file_paths(image_path,mask_path):   
+    name = image_path.name
     filetype = name.split('.')[-1]
     name=name[:-len(filetype)-1]
-    output_folder = './results/'
     time_struct=time.gmtime()
-    time_str=str(time_struct[2])+'_'+str(time_struct[1])+'_'+str(time_struct[0])+'-'+str(time_struct[3])+':'+str(time_struct[4])+':'+str(time_struct[5])
-    if not op.exists(output_folder +name +'/'+time_str+'/'):
-        os.makedirs(output_folder +name+'/'+time_str+'/')
-        os.makedirs(output_folder +name+'/'+time_str+'/'+'fft_images/')
+    time_str=str(time_struct[2])+'_'+str(time_struct[1])+'_'+str(time_struct[0])+'-'+str(time_struct[3])+'_'+str(time_struct[4])+'_'+str(time_struct[5])
+    output_folder = (base_path / f'./results/{time_str}/').resolve()
+    fft_images = (output_folder / './fft_images/').resolve()
+    if not output_folder.exists():
+        os.makedirs(output_folder.as_posix())
+        os.makedirs(fft_images.as_posix())
     
-    output_path_fft_image = output_folder +name + '/'+time_str+'/fft_images/' + 'fft_' + name + '.png'
-    output_path_intensity_image = output_folder +name + '/'+time_str+'/fft_images/' + 'fft_intensity_'+ name + '.png'
-    output_path_phase_image = output_folder +name + '/'+time_str+'/fft_images/' + 'fft_phase_' + name + '.png'
-    output_path_intensity_inverse_image = output_folder +name + '/'+time_str+'/fft_images/' + 'sqrt_of_intensity_inverse_'+ name + '.png'
-    output_path_autocorrelation_image = output_folder +name + '/'+time_str+'/fft_images/' + 'autocorrelation_'+ name + '.png'
-    output_path_phase_inverse_image = output_folder +name + '/'+time_str+'/fft_images/' + 'phase_inverse_' + name + '.png'
-    output_path_inverse_image = output_folder +name + '/'+time_str+'/fft_images/' + 'full_inverse_' + name + '.png'
-    
-    initial_density_path = output_folder +name + '/'+time_str+'/' + 'initial_density_' + name + '.png'
-    initial_mask_path = output_folder +name + '/'+time_str+'/' + 'initial_mask_' + name + '.png'
-    reconstruction_path = output_folder +name + '/'+time_str+'/' + 'reconstructed_density_' + name + '.png'
-    reconstruction_video_path = output_folder +name + '/'+time_str+'/' + 'reconstruction_video_density_' + name + '.avi'
-    reconstruction_video_path_color = output_folder +name + '/'+time_str+'/' + 'reconstruction_video_density_colored_' + name + '.avi'
-    reconstructed_mask_path = output_folder +name + '/'+time_str+'/' + 'reconstructed_mask_' + name + '.png'
+    output_path_fft_image = (fft_images / f'fft_{name}.png').resolve().as_posix()
+    output_path_intensity_image = (fft_images / f'fft_intensity_{name}.png').resolve().as_posix()
+    output_path_phase_image = (fft_images / f'fft_phase_{name}.png').resolve().as_posix()
+    output_path_intensity_inverse_image = (fft_images / f'sqrt_of_intensity_inverse_{name}.png').resolve().as_posix()
+    output_path_autocorrelation_image = (fft_images /  f'autocorrelation_{name}.png').resolve().as_posix()
+    output_path_phase_inverse_image = (fft_images / f'phase_inverse_{name}.png').resolve().as_posix()
+    output_path_inverse_image = (fft_images / f'full_inverse_{name}.png').resolve().as_posix()
+
+    initial_density_path = ( output_folder / f'initial_density_{name}.png').resolve().as_posix()
+    initial_mask_path = ( output_folder / f'initial_mask_{name}.png').resolve().as_posix()
+    reconstruction_path = ( output_folder/ f'reconstructed_density_{name}.png').resolve().as_posix()
+    reconstruction_video_path = (output_folder /  f'reconstruction_video_density_{name}.avi').resolve().as_posix()
+    reconstruction_video_path_color = ( output_folder / f'reconstruction_video_density_colored_{name}.avi').resolve().as_posix()
+    reconstructed_mask_path = (output_folder / 'reconstructed_mask_{name}.png').resolve().as_posix()
     
     return locals()
 def save_images(phases,intensity,inverse_array,intensity_inverse_array,phases_inverse_array,autocorrelation):
@@ -247,7 +249,7 @@ def density_to_fft_intensity(density):
 
 def fft_example():
     # load image  | Lade Bild datei
-    bw_array = CV_Plugin.load(input_path_image,as_grayscale=True)
+    bw_array = CV_Plugin.load(image_path,as_grayscale=True)
     # Fouriertransform Image 
     fft_array = np.fft.fft2(bw_array)
     # Phases and Intensity of fourier transformed image 
@@ -276,20 +278,18 @@ if __name__ == '__main__':
     pyton simple_phasing.py in your console
     '''
     print('----- start processing ------\n')
-    input_path_image =  './snail2.png'
-    #mask_path = './squares_mask.png'
-    mask_path = './snail_mask.png'
-    #input_path_image = './xfel_logo.png'
-    #mask_path = './xfel_mask_small.png'
-
-    ### Define output folder structure #####
-    locals().update(define_file_paths(input_path_image,mask_path))
+    base_path = Path(__file__).parent
+    image_path =  (base_path / './snail.png').resolve()
+    mask_path = (base_path / './snail_mask.png').resolve()
+    locals().update(define_file_paths(image_path,mask_path))
+    image_path =  image_path.as_posix()
+    mask_path = mask_path.as_posix()
 
 
 
     #### Start Computations ####
     calc_fft_images = True
-    do_phasing = False
+    do_phasing = True
     if calc_fft_images:
         print('Calculating Fourier Transform Images')
         fft_example()
@@ -332,7 +332,7 @@ if __name__ == '__main__':
         max_RAM = 2 # In Gigabyte
         
         
-        density = CV_Plugin.load(input_path_image,as_grayscale=True)
+        density = CV_Plugin.load(image_path,as_grayscale=True)
         x_len,y_len = density.shape
         initial_mask = CV_Plugin.load(mask_path,as_grayscale=True)
         initial_mask = (initial_mask!=0)

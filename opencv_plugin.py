@@ -174,6 +174,7 @@ class CV_Plugin:
         cls.save_hls(path,phases,intensity = intensity,log_scale = log_scale,saturation=saturation)
     @classmethod
     def load(cls,path,as_grayscale=False):
+        print(f'Loading Image from: {path}')
         image = cv.imread(path)
         cv.waitKey(0)
         if as_grayscale:
