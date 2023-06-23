@@ -223,7 +223,10 @@ class CV_Plugin:
         else:
             bg_value = vmin
         data-=vmin
-        data*=255/(vmax-vmin)
+        if (vmax-vmin)!=0:
+            data*=255/(vmax-vmin)
+        else:
+            data[:]=0
         data=data.astype(np.uint8)
         data= cv.applyColorMap(data, cls.colormaps.get(colormap,cv.COLORMAP_VIRIDIS))
 
