@@ -26,12 +26,12 @@ from opencv_plugin import CV_Plugin,get_phase_and_intensity
 #                  #   Transform     #
 #                  ###################
 #
-# Starting form a random density guess d the correct density is approximated
-# using the follwoing process:
+# Starting form a random density guess 'd', the correct density is approximated
+# using the following process:
 # 1. Calculate the fourier Transform F(d) of d.
-# 2. Enforce the known intensity (I) values by setting F(d2) = F(d)/|F(d)| * sqrt(I)
+# 2. Enforce the known intensity values (I) by setting F(d2) = F(d)/|F(d)| * sqrt(I)
 #    This is the Intensity projection
-# 3. Inverse fourier transform of F(d2) to obtain the new density guess d2
+# 3. Inverse fourier transform F(d2) to obtain the new density guess d2
 # 4. Project all values of d2 outside of the density support to 0 and call the new density d3
 # 5.
 #    a) In case of Error reduction (ER) iterations continue in step 1. with d3
@@ -39,13 +39,15 @@ from opencv_plugin import CV_Plugin,get_phase_and_intensity
 
 # Every couple of iterations it helps to update the support region by a method called shrink-wrap.
 # Here the current density guess is blurred and the new support area is defined by the set of
-# blurred density values that are above some threshold value relative to the maximum value of the
+# blurred density values that are above some threshold relative to the maximum of the
 # blurred density.
 
-# This algorithm tries to oprimize a random input function such that it simultaneousely satisfies
+# This phasing algorithm tries to optimize a random input function such that it simultaneousely satisfies
 # a support constraint and the constraint that its fourier transform has given absolute values I.
 
 # This is a high dimensional optimization problem and there do not exist convergence guaranties.
+# In fact the problem can be understood as special case of quadratic programming 
+# (https://en.wikipedia.org/wiki/Quadratic_programming) which is NP hard.
 # It can happen that for certain inputs the algorithm gets stuck in local minima. The HIO part of
 # the algorithm tries to escape local minima by providing negative feedback where ever the support
 # condition is not satisfied. (In step 5. b) b*(d3-d2) is nonzero only were the support constraint
@@ -307,13 +309,13 @@ if __name__ == '__main__':
         
         # sigma
         # Defines the standard deviation of the gaussian burring filter.
-        # A sigma value of 1 defines the burred desnity as convolution the input density with a gaussian distribution that has a standard deviation of 1 pixel.
+        # A sigma value of 1 defines the burred desnity as convolution of the input density with a gaussian distribution that has a standard deviation of 1 pixel.
         sigma = 1
         
         # threshold
         # Regulates the area which is considered as new function support.
         # Values are between 0 and 1.
-        # A value of e.g. 0.15 indicates that the new support area is defined by all elements of the blurred density that have values higher or equal to 15% of the maximal blurred density value. 
+        # A value of e.g. 0.15 indicates that the new support area is defined by all pixels of the blurred density that have values higher or equal to 15% of the maximal blurred density value. 
         threshold = 0.15
 
         # Phasing loop parameters
